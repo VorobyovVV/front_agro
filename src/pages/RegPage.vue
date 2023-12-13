@@ -57,7 +57,7 @@ export default {
                 .then((myresponse) => {
                     const { id, email, role, created_by } = myresponse;
                     userStore.updateAll({ id, email, role, created_by });
-                    router.push('/map');
+                    router.push({ name: 'login' });
                 })
                 .catch((myerror) => {
                     console.error(myerror);
