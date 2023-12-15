@@ -112,7 +112,7 @@ export default {
 
 
     return {
-      myrole, orgData, workData
+      myrole, orgData, workData, flag
     }
   }
 }
