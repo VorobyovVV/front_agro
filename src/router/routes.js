@@ -1,3 +1,5 @@
+import { userStore } from "src/usage";
+
 const routes = [
   {
     path: "/",
@@ -44,6 +46,11 @@ const routes = [
         path: "workers",
         name: "workers",
         component: () => import("pages/WorkerPage.vue"),
+        beforeEnter: (to, from) => {
+          if (userStore.getState().role !== 'organization') {
+            return false;
+          }
+        }
       },
       {
         path: "settings",
@@ -51,14 +58,9 @@ const routes = [
         component: () => import("pages/SettingsPage.vue"),
       },
       {
-        path: "worker_info",
-        name: "worker_info",
-        component: () => import("pages/Worker_info_page.vue")
-      },
-      {
-        path: "organization_info",
-        name: "organization_info",
-        component: () => import("pages/Organization_info_page.vue")
+        path: "profile_info",
+        name: "profile_info",
+        component: () => import("pages/Profile_info_page.vue")
       },
       {
         path: "field_information",

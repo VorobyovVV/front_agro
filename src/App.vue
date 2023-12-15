@@ -12,27 +12,33 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
-  <router-view v-if="isInit" />
+  <div v-if="isInit">
+
+    <router-view />
+  </div>
   <div v-else>not Initialized</div>
 </template>
 
 <script>
-import { ref, watch } from "vue";
+import { ref, watch, watchEffect } from "vue";
 import { userStore } from "./usage";
 import { onBeforeMount } from "vue";
-// import { postinter } from "./axiosRequest";
-import { useRoute } from "vue-router";
+import { postToServer } from "./axiosRequest";
 
 export default {
   setup() {
     const isInit = ref(userStore.getIsInitialized());
     const errorShow = ref(false);
     const error = ref(null);
-    const route = useRoute();
+    // const route = useRoute();
     function closeError() {
       userStore.setError(null);
       errorShow.value = false;
     }
+
+
+
+    console.log(userStore.getState().access_token);
 
     watch(
       () => userStore.getError(),
@@ -49,20 +55,49 @@ export default {
       (val) => {
         isInit.value = val;
       }
-    )
+    );
+
+    watchEffect(() => {
+      // console.log(userStore.getState().access_token);
+
+      if (userStore.getState().access_token) {
+        postToServer({ url: 'http://localhost:8080/api/auth/users/me', request: 'get' })
+          .then((response) => {
+            console.log(response);
+            userStore.updateState('role', response.role);
+            console.log(response.role);
+            return postToServer({ url: `http://localhost:8080/api/profiles/${response.role}s/me`, request: 'get' })
+          })
+          .then((response) => {
+            console.log(response);
+            userStore.updateState('user_id', response.user_id);
+            let info = {};
+            for (const key in response) {
+              if (key !== 'user_id' && key !== 'id') {
+                info[key] = response[key];
+              }
+            }
+            if (userStore.getState().role === 'organization') {
+              userStore.updateAll({ organizationInfo: info });
+            } else {
+              userStore.updateAll({ workerInfo: info });
+            }
+            console.log(userStore.getState());
+          })
+          .catch((error) => {
+            if (error === 'Profile not found') {
+
+            } else {
+              console.error(error);
+              userStore.setError(error);
+            }
+          })
+      }
+
+
+    })
     onBeforeMount(() => {
-      userStore.init()
-        // .then(() => {
-        //   if (route.name !== 'entry') {
-        //     return postinter();
-        //   }
-        // })
-        .then(() => {
-          console.log('done');
-        })
-        .catch((error) => {
-          console.error(error);
-        })
+      userStore.init();
     })
     return { errorShow, error, closeError, isInit }
   }

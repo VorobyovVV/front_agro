@@ -11,12 +11,12 @@
         <q-avatar icon="account_circle" size="xl" font-size="50px" text-color="primary">
           <q-menu>
             <q-list>
-              <q-item clickable v-close-popup @click="goToWoker">
-                <q-item-section>Работник</q-item-section>
+              <q-item clickable v-close-popup @click="goToProfile">
+                <q-item-section>Профиль</q-item-section>
               </q-item>
-              <q-item clickable v-close-popup @click="goToOrganization">
+              <!-- <q-item clickable v-close-popup @click="goToOrganization">
                 <q-item-section>Организация</q-item-section>
-              </q-item>
+              </q-item> -->
             </q-list>
           </q-menu>
         </q-avatar>
@@ -35,7 +35,7 @@
           </q-item-section>
         </q-item>
 
-        <EssentialLink v-for="link in essentialLinks" :key="link.title" v-bind="link" />
+        <EssentialLink v-for="link in linksList" :key="link.title" v-bind="link" />
       </q-list>
     </q-drawer>
 
@@ -46,48 +46,12 @@
 </template>
 
 <script>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import EssentialLink from 'components/EssentialLink.vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { userStore } from 'src/usage'
 
 
-const linksList = [
-  {
-    title: 'Карта',
-    icon: 'o_map',
-    link: '/map'
-  },
-
-  {
-    title: 'Культуры',
-    icon: 'o_spa',
-    link: '/culture'
-  },
-
-  {
-    title: 'Севооборот',
-    icon: 'o_compost',
-    link: '/rotation'
-  },
-
-  {
-    title: 'Сотрудники',
-    icon: 'o_manage_accounts',
-    link: '/workers'
-  },
-
-  {
-    title: 'Настройки',
-    icon: 'o_settings',
-    link: '/settings'
-  },
-
-  {
-    title: 'Выход',
-    icon: 'o_logout',
-    link: '/'
-  },
-]
 
 export default {
   name: 'MainLayout',
@@ -97,20 +61,57 @@ export default {
   },
 
 
-  methods: {
-    goToWoker() {
-      this.$router.push('/worker_info');
-    },
-    goToOrganization() {
-      this.$router.push('/organization_info');
-    },
-  },
-
 
   setup() {
     const route = useRoute();
     const miniOpen = ref(false);
     const pageTitle = ref('');
+    const router = useRouter();
+
+    const linksList = computed(() =>
+      [
+        {
+          title: 'Карта',
+          icon: 'o_map',
+          link: '/map'
+        },
+
+        {
+          title: 'Культуры',
+          icon: 'o_spa',
+          link: '/culture'
+        },
+
+        {
+          title: 'Севооборот',
+          icon: 'o_compost',
+          link: '/rotation'
+        },
+
+        {
+          title: 'Сотрудники',
+          icon: 'o_manage_accounts',
+          hide: userStore.getState().role === 'worker',
+          link: '/workers'
+        },
+
+        {
+          title: 'Настройки',
+          icon: 'o_settings',
+          link: '/settings'
+        },
+
+        {
+          title: 'Выход',
+          icon: 'o_logout',
+          action: () => {
+            userStore.clearAll();
+          },
+          link: '/'
+        },
+      ]
+    )
+
 
     const setPageTitle = (linkTitle) => {
       pageTitle.value = linkTitle;
@@ -121,12 +122,19 @@ export default {
       updatePageTitle();
     });
 
+    function goToProfile() {
+      router.push({ name: 'profile_info' });
+    };
+    // function goToOrganization() {
+    //   router.push('/organization_info');
+    // };
+
     watch(() => route.path, () => {
       updatePageTitle();
     });
 
     const updatePageTitle = () => {
-      const foundLink = linksList.find(link => link.link === route.path);
+      const foundLink = linksList.value.find(link => link.link === route.path);
       if (foundLink) {
         if (foundLink.title === 'Сотрудники') {
           setPageTitle('Мои сотрудники');
@@ -136,21 +144,16 @@ export default {
       }
     };
 
-    // const handleAction = (action) => {
-    //   if (action === 'logout') {
-    //     userStore.clearAll();
-    //     router.push('/'); // Переход на главную страницу после выхода
-    //   }
-    // };
 
     return {
-      essentialLinks: linksList,
+      linksList,
       miniOpen,
+
       pageTitle,
       toggleLeftDrawer() {
         miniOpen.value = !miniOpen.value;
       },
-      // handleLogout
+      goToProfile,
     };
   }
 }

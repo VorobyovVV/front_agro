@@ -1,5 +1,5 @@
 <template>
-  <q-item clickable tag="a" :to="link" :class="{ 'menu': isActive }" class="myclass">
+  <q-item clickable tag="a" :to="link" :class="{ 'menu': isActive }" class="myclass" @click="action" v-if="!hide">
     <q-item-section v-if="icon" avatar>
       <q-icon :name="icon" />
     </q-item-section>
@@ -29,11 +29,21 @@ export default defineComponent({
       type: String,
       default: ''
     },
+    action: {
+      type: Function,
+      default: () => { }
+    },
+    hide: {
+      type: Boolean,
+      default: false,
+    }
   },
 
   setup(props) {
     const route = useRoute()
     const isActive = computed(() => route.fullPath === props.link)
+
+
 
     return {
       isActive

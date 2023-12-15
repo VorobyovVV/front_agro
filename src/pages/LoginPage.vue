@@ -52,7 +52,7 @@ export default {
             postlog({ username: email.value, password: password.value })
                 .then((myresponse) => {
                     const { access_token, token_type } = myresponse;
-                    userStore.updateAll({ access_token, token_type });
+                    userStore.updateAll({ access_token, token_type, email: email.value });
                     router.push('/map');
                 })
                 .catch((myerror) => {

@@ -17,6 +17,7 @@ function parseerror(data) {
 
 function parseCodeError(error) {
     let msg = '';
+    // console.log('ERROR', error)
     if (error.status === 401) {
         // clean the store; go to logout page
         userStore.clearAll();
@@ -43,7 +44,7 @@ export function postreg({ email, text_password, role }) {
             .then((response) => {
                 console.log(response);
                 const code = response.status;
-                if (code === 201) {
+                if (code > 199 && code < 300) {
                     resolve(response.data);
                 } else {
                     reject(parseCodeError(response));
@@ -52,7 +53,7 @@ export function postreg({ email, text_password, role }) {
 
             )
             .catch((error) => {
-                reject(error);
+                reject(parseCodeError(error.response));
             })
     }
 
@@ -75,52 +76,17 @@ export function postlog({ username, password }) {
             .then((response) => {
                 console.log(response);
                 const code = response.status;
-                if (code === 200) {
+                if (code > 199 && code < 300) {
                     resolve(response.data);
                 } else {
                     reject(parseCodeError(response));
                 }
             })
             .catch((error) => {
-                reject(error);
+                reject(parseCodeError(error.response));
             })
     })
 }
-
-
-
-// export function postinter() {
-//     return new Promise((resolve, reject) => {
-//         console.log(userStore.getState());
-//         const { access_token } = userStore.getState();
-//         if (!access_token) {
-//             console.log('no token found');
-
-//             reject('no token');
-//             return
-//         }
-
-//         axios
-//             .post('http://localhost:8080/api/auth/introspect', null, {
-//                 headers: {
-//                     'Authorization': `Bearer ${'access_token'}`,
-//                     'Content-Type': 'application/json'
-//                 }
-//             })
-//             .then((myresponse) => {
-//                 console.log(myresponse);
-//                 const code = myresponse.status;
-//                 if (code === 200) {
-//                     resolve(myresponse);
-//                 } else {
-//                     reject(parseCodeError(myresponse));
-//                 }
-//             })
-//             .catch((error) => {
-//                 reject(error);
-//             })
-//     })
-// }
 
 
 // export function postworkers({ name, surname, patronymic, date_of_birth, phone_number }) {
@@ -146,43 +112,61 @@ export function postlog({ username, password }) {
 
 
 
-export function postToServer(object, responseType = "json") {
-    console.log("POST TO SERVER: ", object); // что передаем
+export function postToServer({ url, data, request, getParams }) {
+    console.log("POST TO SERVER: ", data); // что передаем
 
     return new Promise((resolve, reject) => { //ассинхронное 
         const { access_token } = userStore.getState();
-        //     const tokenId = window.localStorage.getItem("pwa-tokenId");
+        let axiosFunc;
 
-        if (!access_tokentoken) { //хранить в локальном хранилище
+        if (!access_token) { //хранить в локальном хранилище
             console.log("No tokens found");
             reject('no token');
             return;
         }
 
-        // const config = {
-        //     headers: {
-        //         Authorization: { "token": ["${token}", "${tokenId}"] },
-        //     },
-        //     responseType,
-        // };
-        // console.log('SEND: ', object);
-        axios
-            .post(url, object, config)
+        const config = {
+            headers: {
+                'Authorization': `Bearer ${access_token}`,
+                'Content-Type': 'application/json'
+            },
+            ...getParams
+        };
+
+        if (request === 'get') {
+            axiosFunc = axios.get(url, config);
+        } else if (request === 'post') {
+            axiosFunc = axios.post(url, data, config);
+        } else if (request === 'put') {
+            axiosFunc = axios.put(url, data, config)
+        } else if (request === 'delete') {
+            axiosFunc = axios.delete(url, config)
+        } else {
+            console.log('unknown Request Type');
+        }
+
+        axiosFunc
             .then((response) => {
-                const result = checkResponse(response);
-                console.log("OBJECT: ", object);
+                const code = response.status;
+                console.log("OBJECT: ", data);
                 console.log("RESPONSE: ", response);
-                console.log("RESULT: ", result);
-                if (result.code === 0) resolve(result.payload);
-                else {
-                    if (result.message) reject(result.message);
-                    reject(result);
+                if (code > 199 && code < 300) {
+                    console.log('RESULT: ', response.data);
+                    resolve(response.data);
+                } else {
+                    reject(parseCodeError(response));
                 }
             })
             .catch((error) => {
-                console.log("ERR", error);
-                storeArray.setError(error);
-                reject(error);
+                // console.log("ERR", error);
+                const errormsg = parseCodeError(error.response);
+                console.log(errormsg);
+                reject(errormsg);
             });
     });
 }
+
+
+// export function getFromServer(object){
+
+// }

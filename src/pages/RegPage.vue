@@ -18,8 +18,8 @@
                                 <q-input filled label="Email" type="email" class="q-my-sm" v-model="email"></q-input>
                                 <q-input filled label="Пароль" type="password" class="q-my-sm" v-model="password"
                                     @keyup.enter="readyClick"></q-input>
-                                <q-input filled label="Роль" type="text" class="q-my-sm" v-model="role"
-                                    @keyup.enter="readyClick"></q-input>
+                                <!-- <q-input filled label="Роль" type="text" class="q-my-sm" v-model="role" -->
+                                <!-- @keyup.enter="readyClick"></q-input> -->
                             </q-card-section>
                         </q-card-section>
                         <q-card-actions>
@@ -50,14 +50,14 @@ export default {
             console.log(email);
             console.log(password);
             console.log(role);
-            if (!email.value.trim() || !password.value.trim() || !role.value.trim()) {
+            if (!email.value.trim() || !password.value.trim()) {
                 throw new Error('не все данные введены');
             }
-            postreg({ email: email.value, text_password: password.value, role: role.value })
+            postreg({ email: email.value, text_password: password.value, role: 'organization' })
                 .then((myresponse) => {
                     const { id, email, role, created_by } = myresponse;
                     userStore.updateAll({ id, email, role, created_by });
-                    router.push('/map');
+                    router.push({ name: 'login' });
                 })
                 .catch((myerror) => {
                     console.error(myerror);
