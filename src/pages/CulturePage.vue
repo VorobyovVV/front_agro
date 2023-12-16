@@ -1,12 +1,12 @@
 <template>
     <div v-show="cropData">
-        <q-select v-model="computedFieldId" :options="fields" label="FieldId"></q-select>
-        <q-select v-model="computedCropId" :options="crops" label="CropId"></q-select>
+        <q-select v-model="computedFieldId" :options="fields" option-label="label" option-value="value" label="Поле"></q-select>
+        <q-select v-model="computedCropId" :options="crops" option-label="label" option-value="value" label="Культура"></q-select>
         <q-input v-model="cropData.startDate" label="StartDate (DD-MM-YYYY)" hint="Format: DD-MM-YYYY" mask="##-##-####"></q-input>
         <q-input v-model="cropData.endDate" label="EndDate (DD-MM-YYYY)" hint="Format: DD-MM-YYYY" mask="##-##-####"></q-input>
         <q-input v-model="cropData.description" label="Description"></q-input>
 
-        <q-btn label="Submit" @click="submitData" :disabled="isSubmitDisabled"></q-btn>
+        <q-btn label="ПЕРЕДАВАТЬ" @click="submitData" :disabled="isSubmitDisabled"></q-btn>
     </div>
 </template>
 
@@ -48,7 +48,7 @@ export default {
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json'
                 }});
-                fields.value = response.data.map(field => ({ label: `${field.name} - id: ${field.id}`, value: field.id }));
+                fields.value = response.data.map(field => ({ label: field.name, value: field.id }));
                 console.log(fields);
             } catch (error) {
                 console.error('Error fetching fields:', error);
@@ -62,7 +62,7 @@ export default {
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json'
                 }});
-                crops.value = response.data.map(crop => ({ label: `${crop.name} - id: ${crop.id}`, value: crop.id }));
+                crops.value = response.data.map(crop => ({ label: crop.name, value: crop.id }));
             } catch (error) {
                 console.error('Error fetching crops:', error);
             }
@@ -70,15 +70,15 @@ export default {
         //get fieldId
         const computedFieldId = computed({
             get: () => cropData.value.fieldId,
-            set: (newValue) => {
-                cropData.value.fieldId = typeof newValue === 'object' ? newValue.value : newValue;
+            set: (value) => {
+                cropData.value.fieldId = fields.value.find(field => field.value === value) || value;;
             }
         });
         //get cropId
         const computedCropId = computed({
             get: () => cropData.value.cropId,
-            set: (newValue) => {
-                cropData.value.cropId = typeof newValue === 'object' ? newValue.value : newValue;
+            set: (value) => {
+                cropData.value.cropId = crops.value.find(crop => crop.value === value) || value;;
             }
         });
         //check time
@@ -122,8 +122,17 @@ export default {
                 return; 
             };
 
-            console.log('Submitting data:', JSON.stringify(cropData.value));
-            axios.post('http://localhost:8080/api/fields/crop-rotations', cropData.value, {
+            const submissionData = {
+                fieldId: cropData.value.fieldId.value, 
+                cropId: cropData.value.cropId.value, 
+                startDate: cropData.value.startDate,
+                endDate: cropData.value.endDate,
+                description: cropData.value.description
+            };
+
+
+            console.log('Submitting data:', JSON.stringify(submissionData));
+            axios.post('http://localhost:8080/api/fields/crop-rotations', submissionData, {
                 headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
@@ -131,6 +140,15 @@ export default {
             })
             .then(response => {
                 console.log(response);
+                const selectedField = fields.value.find(f => f.value === cropData.value.fieldId.value);
+                const selectedCrop = crops.value.find(c => c.value === cropData.value.cropId.value);
+
+                if (selectedField) {
+                    computedFieldId.value = selectedField;
+                }
+                if (selectedCrop) {
+                    computedCropId.value = selectedCrop;
+                }
                 $q.notify({
                     color: 'green-5',
                     textColor: 'white',
