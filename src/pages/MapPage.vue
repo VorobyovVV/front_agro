@@ -48,7 +48,7 @@ export default {
         fields.forEach(field => {
           if (field.geom && field.geom.coordinates) {
             const coordinates = field.geom.coordinates.map(coord => [coord.latitude, coord.longitude]);
-            const polygon = L.polygon(coordinates, { color: field.color || 'blue' }).addTo(map.value);
+            const polygon = L.polygon(coordinates, { color: `#${field.color}` }).addTo(map.value);
             const popupContent = `<strong>${field.name}</strong><br>${field.description}<br><button id="popup-button-${field.id}">View Details</button>`;
 
             //add button for field info

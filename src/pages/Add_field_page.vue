@@ -11,6 +11,9 @@
         <q-input v-model="formData.description" label="Описание"></q-input>
         <q-input v-model="formData.activityStart" label="Начало активности (DD-MM-YYYY)" hint="Format: DD-MM-YYYY" mask="##-##-####"></q-input>
         <q-input v-model="formData.activityEnd" label="Окончание активности (DD-MM-YYYY)" hint="Format: DD-MM-YYYY" mask="##-##-####"></q-input>
+      
+        <q-input v-model="formData.color" type="color" :value="formData.color" label="Выберите цвет"></q-input>
+
         <q-input v-model="coordinatesJSON" label="Координаты"></q-input>
         <q-card flat bordered class="q-ma-md">
         <q-card-section>
@@ -178,6 +181,7 @@
         };
         
         formData.value.squareArea = calculateArea.value;
+        formData.value.color = formData.value.color.replace('#', '');
 
         console.log('success');
         console.log('Submitting data:', JSON.stringify(formData)); //check data
