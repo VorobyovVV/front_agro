@@ -137,6 +137,7 @@ export default {
         if(data) {
           data.forEach(item => {
             rotationData.push({
+              id: item.id,
               culture: item.crop.name,
               field_area: item.field.name, 
               start_time: formatDateString(item.startDate),
