@@ -2,11 +2,10 @@
     <div v-show="cropData">
         <q-card class="q-ma-md" flat bordered>
             <q-card-section>
-                <div><strong>{{ cropData.fieldId }}</strong></div>
                 <div><strong>{{ fieldName }}</strong></div>
             </q-card-section>
         </q-card>
-        <q-select v-model="computedCropId" :options="crops" label="Идентификатор культуры"></q-select>
+        <q-select v-model="computedCropId" :options="crops" option-label="label" option-value="value" label="Идентификатор культуры"></q-select>
         <q-input v-model="cropData.startDate" label="Дата начала (DD-MM-YYYY)" hint="Format: DD-MM-YYYY" mask="##-##-####"></q-input>
         <q-input v-model="cropData.endDate" label="Дата окончания (DD-MM-YYYY)" hint="Format: DD-MM-YYYY" mask="##-##-####"></q-input>
         <q-input v-model="cropData.description" label="Описание"></q-input>
@@ -77,7 +76,7 @@ export default {
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json'
                 }});
-                crops.value = response.data.map(crop => ({ label: `${crop.name} - id: ${crop.id}`, value: crop.id }));
+                crops.value = response.data.map(crop => ({ label: crop.name, value: crop.id }));
             } catch (error) {
                 console.error('Error fetching crops:', error);
             }
@@ -86,8 +85,8 @@ export default {
         //get cropId
         const computedCropId = computed({
             get: () => cropData.value.cropId,
-            set: (newValue) => {
-                cropData.value.cropId = typeof newValue === 'object' ? newValue.value : newValue;
+            set: (value) => {
+                cropData.value.cropId = crops.value.find(crop => crop.value === value) || value;;
             }
         });
         //check time
@@ -131,8 +130,16 @@ export default {
                 return; 
             };
 
-            console.log('Submitting data:', JSON.stringify(cropData.value));
-            axios.put(`http://localhost:8080/api/fields/crop-rotations?cropRotationId=${cropRotationId}`, cropData.value, {
+            const submissionData = {
+                fieldId: cropData.value.fieldId, 
+                cropId: cropData.value.cropId.value, 
+                startDate: cropData.value.startDate,
+                endDate: cropData.value.endDate,
+                description: cropData.value.description
+            };
+
+            console.log('Submitting data:', JSON.stringify(submissionData));
+            axios.put(`http://localhost:8080/api/fields/crop-rotations?cropRotationId=${cropRotationId}`, submissionData, {
                 headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
@@ -140,6 +147,12 @@ export default {
             })
             .then(response => {
                 console.log(response);
+                const selectedCrop = crops.value.find(c => c.value === cropData.value.cropId.value);
+               
+                if (selectedCrop) {
+                    computedCropId.value = selectedCrop;
+                }
+               
                 $q.notify({
                     color: 'green-5',
                     textColor: 'white',

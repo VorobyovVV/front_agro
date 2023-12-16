@@ -149,6 +149,7 @@ export default {
                 if (selectedCrop) {
                     computedCropId.value = selectedCrop;
                 }
+              
                 $q.notify({
                     color: 'green-5',
                     textColor: 'white',
