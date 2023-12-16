@@ -50,7 +50,7 @@ export default {
             const coordinates = field.geom.coordinates.map(coord => [coord.latitude, coord.longitude]);
             const polygon = L.polygon(coordinates, { color: `#${field.color}` }).addTo(map.value);
             const cropName = field.crop?.name || ''
-            const popupContent = `<strong>${field.name}</strong><br><strong>${cropName}<strong><br>${field.description}<br><button id="popup-button-${field.id}">Посмотреть детали</button>`;
+            const popupContent = `<strong>${field.name}</strong><br><strong>${cropName}</strong><br>${field.description}<br><button id="popup-button-${field.id}">Посмотреть детали</button>`;
 
             //add button for field info
             polygon.bindPopup(popupContent).on('popupopen', (e) => {
