@@ -31,6 +31,11 @@
       :rows="filteredRows"
       :columns="rotationColumns"
     >
+      <template v-slot:body-cell-row_number="props">
+        <q-td :props="props">
+          {{ props.rowIndex + 1 }}
+        </q-td>
+      </template>
       <template v-slot:body-cell-actions="props">
         <q-td :props="props">
           <q-btn flat icon="delete" @click="deleteRow(props.row.id)" />
@@ -61,15 +66,8 @@ export default {
 
     const rotationData = reactive([]);
     const rotationColumns = reactive([
-      { name: 'id', 
-        label: 'ID', 
-        required: true, 
-        align: 'center', 
-        field: 'id', 
-        sortable: true,
-      },
+      { name: 'row_number', label: 'ID', align: 'center', field: (_row, index) => index + 1, sortable: true },
       { name: 'culture', label: 'Культура', align: 'center', field: 'culture', sortable: true },
-      { name: 'crop_id', label: 'ID Культура', align: 'center', field: 'crop_id', sortable: true  },
       { name: 'field_area', label: 'Площадь Поля', align: 'center', field: 'field_area', sortable: true  },
       { name: 'start_time', label: 'Дата Начала', align: 'center', field: 'start_time', sortable: true  },
       { name: 'end_time', label: 'Дата Завершения', align: 'center', field: 'end_time', sortable: true  },
@@ -139,9 +137,7 @@ export default {
         if(data) {
           data.forEach(item => {
             rotationData.push({
-              id: item.id,
               culture: item.crop.name,
-              crop_id: item.crop.id, 
               field_area: item.field.name, 
               start_time: formatDateString(item.startDate),
               end_time: formatDateString(item.endDate),
