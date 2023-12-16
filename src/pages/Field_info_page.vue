@@ -11,6 +11,63 @@
                         hide-bottom
                         header-class="custom-header-font"
                     />
+                <div class="text-h4 clickable-text" @click="cropRotationComposition">Культуры</div>
+                <q-table
+                    v-if="isCropVisible"
+                    flat bordered
+                    virtual-scroll
+                    v-model="pagination"
+                    :rows-per-page-options="[0]"
+                    :virtual-scroll-sticky-size-start="48"
+                    column-key="id"
+                    :rows="filteredRows"
+                    :columns="rotationColumns"
+                    hide-bottom
+                >
+
+                <template v-slot:body-cell-row_number="props">
+                    <q-td :props="props">
+                    {{ props.rowIndex + 1 }}
+                    </q-td>
+                </template>
+                <template v-slot:body-cell-actions="props">
+                    <q-td :props="props">
+                    <q-btn flat icon="delete" @click="deleteRow(props.row.id)" />
+                    </q-td>
+                </template>
+                <template v-slot:body-cell-edit="props">
+                    <q-td :props="props">
+                    <q-btn flat icon="launch" @click="navigateToPage(props.row.id)" />
+                    </q-td>
+                </template>
+                
+                <template v-slot:top>
+                    <div class="q-mb-md">
+                        <q-input v-model="startDate" placeholder="Дата Начала">
+                        <template v-slot:append>
+                            <q-icon name="event" class="cursor-pointer">
+                            <q-popup-proxy ref="qDateProxyStart" transition-show="scale" transition-hide="scale">
+                                <q-date v-model="startDate" @input="() => $refs.qDateProxyStart.hide()" />
+                            </q-popup-proxy>
+                            </q-icon>
+                        </template>
+                        </q-input>
+
+                        <q-input v-model="endDate" placeholder="Дата Завершения">
+                        <template v-slot:append>
+                            <q-icon name="event" class="cursor-pointer">
+                            <q-popup-proxy ref="qDateProxyEnd" transition-show="scale" transition-hide="scale">
+                                <q-date v-model="endDate" :min="startDate" @input="() => $refs.qDateProxyEnd.hide()" />
+                            </q-popup-proxy>
+                            </q-icon>
+                        </template>
+                        </q-input>
+                    </div>
+                </template>
+
+                </q-table>
+
+                    
             </div>
             <div class="col-12 col-md-6 q-pl-md">
                 <!-- map -->
@@ -26,7 +83,7 @@
                 <div class="text-h4 clickable-text" @click="fetchSoilComposition">Агрохимический состав почвы</div>
                 <q-btn label="Изменить ингредиенты" @click="goToFetchSoil"></q-btn>
                 <q-table
-                    v-if="isTableVisible"
+                    v-if="isSoilVisible"
                     flat bordered
                     :rows="soilData"
                     :columns="soilColumns"
@@ -34,7 +91,7 @@
                     hide-bottom
                 />
                 <q-table
-                    v-if="isTableVisible"
+                    v-if="isSoilVisible"
                     flat bordered
                     :rows="soilData2"
                     :columns="soilColumns2"
@@ -42,7 +99,7 @@
                     hide-bottom
                 />
                 <q-table
-                    v-if="isTableVisible"
+                    v-if="isSoilVisible"
                     flat bordered
                     :rows="soilData3"
                     :columns="soilColumns3"
@@ -76,7 +133,7 @@
 </template>
 
 <script>
-import { ref, onMounted, reactive, onBeforeUnmount } from 'vue';
+import { ref, onMounted, reactive, onBeforeUnmount, watchEffect, computed } from 'vue';
 import { Chart, registerables } from 'chart.js';
 import { debounce } from 'lodash-es';
 import L from "leaflet";
@@ -94,7 +151,8 @@ export default {
     name: 'Filed_info_page',
     setup() {
         //initialize every table or chart we need
-        const isTableVisible = ref(false);
+        const isCropVisible = ref(false);
+        const isSoilVisible = ref(false);
 
         const isHumidityBarChart = ref(true);
         const isPressureBarChart = ref(true);
@@ -107,7 +165,14 @@ export default {
         const route = useRoute();
         const router = useRouter();
 
+        const accessToken = userStore.state.access_token;
+
         const getName = ref(null);
+
+        const startDate = ref('');
+        const endDate = ref('');
+
+        const $q = useQuasar();
 
         //change field info
         const goBackToAddField = () => {
@@ -224,6 +289,61 @@ export default {
             debouncedinitTemperatureChart();
         }
 
+        //button showing crop rotation
+        const cropRotationComposition = async () => {
+            isCropVisible.value = !isCropVisible.value;
+        };
+
+        const rotationData = reactive([]);
+        const rotationColumns = reactive([
+        { name: 'row_number', label: 'ID', align: 'center', field: (_row, index) => index + 1 },
+        { name: 'culture', label: 'Культура', align: 'center', field: 'culture', sortable: true },
+        { name: 'start_time', label: 'Дата Начала', align: 'center', field: 'start_time', sortable: true  },
+        { name: 'end_time', label: 'Дата Завершения', align: 'center', field: 'end_time', sortable: true  },
+        { name: 'description', label: 'Описание', align: 'center', field: 'description' },
+        { name: 'edit', label: 'Edit', align: 'center', field: row => row.id, format: val => `${val}` },
+        { name: 'actions', label: 'Delete', align: 'center', field: row => row.id, format: val => `${val}` }
+        ]);
+    
+
+        function formatDateString(dateString) {
+            const parts = dateString.split('-');
+            if (parts.length ===3) {
+                return `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+            return dateString;
+        }
+
+
+        async function deleteRow(rowId) {
+            try {
+                const response = await axios.delete(`http://localhost:8080/api/fields/crop-rotations?id=${rowId}`, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+                });
+
+                if (response.status === 204) {
+                $q.notify({
+                color: 'green-5',
+                textColor: 'white',
+                icon: 'check',
+                message: 'Successful delete'
+                });
+                rotationData.splice(rotationData.findIndex(row => row.id === rowId), 1);
+                } else {
+                console.error('Error deleting row:', response);
+                }
+            } catch (error) {
+                console.error('Error during API call:', error);
+            }
+        }
+
+        async function navigateToPage(rowId) {
+            router.push({ path: '/fetch_rotation_field', query: { id: rowId }});
+        };
+
         //button showing chemical element
         const soilData = reactive([]);
         const soilData2 = reactive([]);
@@ -251,7 +371,7 @@ export default {
         ]);
 
         const fetchSoilComposition = async () => {
-            isTableVisible.value = !isTableVisible.value;
+            isSoilVisible.value = !isSoilVisible.value;
         };
 
         //map
@@ -271,7 +391,6 @@ export default {
             }).addTo(map.value);
 
             const fieldId = route.query.fieldId;
-            const accessToken = userStore.state.access_token;
 
             if (!accessToken) {
                 $q.notify({
@@ -280,6 +399,31 @@ export default {
             })
                 return;
             }
+            
+            try {
+                const response = await axios.get(`http://localhost:8080/api/fields/crop-rotations/field?fieldId=${fieldId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const crop_data = response.data;
+                console.log(response.data);
+
+                if(crop_data) {
+                crop_data.cropRotations.forEach(item => {
+                    rotationData.push({
+                    id: item.id,
+                    culture: item.crop.name,
+                    start_time: formatDateString(item.startDate),
+                    end_time: formatDateString(item.endDate),
+                    description: item.description
+                    });
+                })
+                }
+            } catch(error) {
+                console.error('Wrong Api', error);
+            };
 
             try {
                 const response = await axios.get(`http://localhost:8080/api/fields?fieldId=${fieldId}`, {
@@ -355,6 +499,21 @@ export default {
             }
         });
         
+        watchEffect(() => {
+                console.log('Current dates:', startDate.value, endDate.value);
+                });
+        
+        const filteredRows = computed(() => {
+        const start = startDate.value ? new Date(startDate.value.replace(/\//g, '-')).getTime() : -Infinity
+        const end = endDate.value ? new Date(endDate.value.replace(/\//g, '-')).getTime() : Infinity
+
+        return rotationData.filter(rotationData => {
+            const rowStart = new Date(rotationData.start_time).getTime()
+            const rowEnd = new Date(rotationData.end_time).getTime()
+            return rowStart >= start && rowEnd <= end
+        })
+        });
+
         onBeforeUnmount(() => {
             //destroy cache
                 if (humidityChart.value) {
@@ -393,12 +552,22 @@ export default {
             soilColumns3,
             soilData3,
             fetchSoilComposition,
-            isTableVisible,
+            isCropVisible,
+            isSoilVisible,
             debouncedinitHumidityChart,
             debouncedinitPressureChart,
             debouncedinitTemperatureChart,
             goBackToAddField,
-            goToFetchSoil
+            goToFetchSoil,
+            cropRotationComposition,
+            navigateToPage,
+            deleteRow,
+            rotationColumns,
+            rotationData,
+            startDate,
+            endDate,
+            filteredRows,
+            pagination: ref({ rowsPerPage: 1000 })
         };
     },
 
@@ -436,4 +605,34 @@ export default {
   margin-right: 10px;
 }
 
+.virtscroll-table {
+
+max-width: 100%;
+margin-top: 50px;
+margin-bottom: 50px;
+margin-left: auto;
+margin-right: auto;
+width: auto;
+
+.q-table th {
+  font-size: 20px !important;
+}
+.q-table td {
+  font-size: 15px !important;
+}
+
+}
+
+@media (max-width: 768px) {
+.q-table th {
+  font-size: 20px !important;
+}
+.q-table td {
+  font-size: 15px !important;
+}
+.virtscroll-table {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+}
 </style>
