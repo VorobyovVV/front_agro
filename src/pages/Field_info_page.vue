@@ -346,8 +346,7 @@ export default {
                         return [acc[0] + coord[0] / coordinates.length, acc[1] + coord[1] / coordinates.length];
                     }, [0, 0]);
                     map.value.setView(center, 15);
-                    const color = data.color;
-                    const polyon = L.polygon(coordinates, {color: color}).addTo(map.value);
+                    const polyon = L.polygon(coordinates, {color: `#${data.color}`}).addTo(map.value);
                     polyon.bindPopup(`<strong>${data.name}</strong><br>${data.description}`);
                     
                 }

@@ -9,7 +9,8 @@
         <q-input v-model="formData.activityStart" label="Начало активности (DD-MM-YYYY)" hint="Format: DD-MM-YYYY" mask="##-##-####"></q-input>
         <q-input v-model="formData.activityEnd" label="Окончание активности (DD-MM-YYYY)" hint="Format: DD-MM-YYYY" mask="##-##-####"></q-input>
       
-        <q-input v-model="formData.color" type="color" :value="formData.color" label="Выберите цвет"></q-input>
+        <q-input v-model="colorInput" label="Выберите цвет" readonly @click="triggerColorPicker"></q-input>
+        <input type="color" ref="hiddenColorPicker" style="display: none" @input="updateColorInput($event.target.value)" />
 
         <q-input v-model="coordinatesJSON" label="Координаты"></q-input>
         <q-card flat bordered class="q-ma-md">
@@ -39,6 +40,8 @@
       const router = useRouter();
       const route = useRoute();
       const fileInput = ref(null);
+      const hiddenColorPicker = ref(null);
+      const colorInput = ref('');
       const formData = ref({
         name: '',
         description: '',
@@ -54,6 +57,15 @@
       const $q = useQuasar();
 
       const fieldId = route.query.id;
+      //hide color palette
+      const triggerColorPicker = () => {
+          hiddenColorPicker.value.click();
+      };
+
+      const updateColorInput = (color) => {
+          colorInput.value = color.replace('#', ''); 
+          formData.value.color = colorInput.value; 
+      };
 
       const uploadFile = () => {
         fileInput.value.click();
@@ -266,7 +278,11 @@
         calculateArea,
         submitData,
         isSubmitDisabled,
-        deleteData
+        deleteData,
+        hiddenColorPicker,
+        colorInput,
+        triggerColorPicker,
+        updateColorInput
       };
     },
   };
