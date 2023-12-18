@@ -36,7 +36,16 @@ export default {
 
     //Get data
     const fetchDataAndDrawPolygons = async () => {
-      try {
+        try {
+          if (!accessToken) {
+          console.error('No access token available');
+          $q.notify({
+            type: 'negative',
+            message: 'Залогиньтесь, пожалуйста'
+          })
+          return;
+        };
+
         const response = await axios.get(`http://localhost:8080/api/fields/organization/preview`, {
               headers: {
                   'Authorization': `Bearer ${accessToken}`,

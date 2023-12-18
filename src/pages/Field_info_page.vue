@@ -462,7 +462,7 @@ export default {
 
                 }
             } catch (error) {
-                console.error('Wrong Api', error);
+                console.error('Wrong Data', error);
             }
         });
 

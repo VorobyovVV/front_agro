@@ -31,7 +31,6 @@ export default {
 
     const soilData = reactive({});
     const soilColumns = reactive([
-      { name: 'fieldId', label: 'ID поля', field: 'fieldId', align: 'center' },
       { name: 'ph', label: 'ph', field: 'ph', align: 'center' },
       { name: 'sampleDate', label: 'Дата взятия образца', field: 'sampleDate', align: 'center' },
       { name: 'organicMatter', label: 'organicMatter', field: 'organicMatter', align: 'center' },
@@ -106,6 +105,10 @@ export default {
       //check jwt
       if (!accessToken) {
         console.error('No access token available');
+        $q.notify({
+          type: 'negative',
+          message: 'Залогиньтесь, пожалуйста'
+        })
         return;
       }
 
@@ -156,6 +159,20 @@ export default {
         .then(response => {
           console.log(response);
           router.push('/map');
+        })
+        .catch(error => {
+          if (error.response && error.response.status === 500) {
+            $q.notify({
+            type: 'negative',
+            message: 'Неизвестная ошибка'
+          })
+        }
+        if (error.response && error.response.status === 409) {
+            $q.notify({
+            type: 'negative',
+            message: 'Дата уже существует'
+          })
+        }
         })
     };
 

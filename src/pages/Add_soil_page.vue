@@ -62,6 +62,10 @@ export default {
       //check jwt
       if (!accessToken) {
         console.error('No access token available');
+        $q.notify({
+          type: 'negative',
+          message: 'Залогиньтесь, пожалуйста'
+        })
         return;
       };
 
@@ -81,7 +85,7 @@ export default {
           color: 'red-5',
           textColor: 'white',
           icon: 'warning',
-          message: 'Invalid date format. Please use dd-mm-yyyy.'
+          message: 'Неверный формат даты начала активности. Пожалуйста, используйте дд-мм-гггг.'
         });
         return;
       };
@@ -100,6 +104,24 @@ export default {
           router.push({ path: '/field_information', query: { fieldId: fieldId } });
         })
         .catch(error => {
+          if (error.response && error.response.status === 409) {
+            $q.notify({
+            type: 'negative',
+            message: 'Дата уже существует'
+          })
+        }
+        if (error.response && error.response.status === 404) {
+            $q.notify({
+            type: 'negative',
+            message: 'Пожалуйста, сначала создайте Поле'
+          })
+        }
+        if (error.response && error.response.status === 500) {
+            $q.notify({
+            type: 'negative',
+            message: 'Неизвестная ошибка'
+          })
+        }
           console.error('Error submitting data', error);
         })
     };

@@ -113,6 +113,10 @@ export default {
 
       if (!accessToken) {
         console.log("No access token available");
+        $q.notify({
+          type: 'negative',
+          message: 'Залогиньтесь, пожалуйста'
+        })
         return;
       };
 

@@ -204,6 +204,10 @@ export default {
       //check data
       if (!accessToken) {
         console.error('No access token available');
+        $q.notify({
+          type: 'negative',
+          message: 'Залогиньтесь, пожалуйста'
+        })
         return;
       }
       if (isSubmitDisabled.value) {
@@ -250,6 +254,12 @@ export default {
           router.push({ path: '/field_information', query: { fieldId: fieldId } });
         })
         .catch(error => {
+          if (error.response && error.response.status === 500) {
+            $q.notify({
+            type: 'negative',
+            message: 'Неизвестная ошибка'
+          })
+        }
           console.error('Error submitting data', error);
         });
     };
@@ -268,6 +278,15 @@ export default {
           })
           console.log(response);
           router.push('/map');
+        })
+        .catch(error => {
+          if (error.response && error.response.status === 500) {
+            $q.notify({
+            type: 'negative',
+            message: 'Неизвестная ошибка'
+          })
+        }
+          console.error('Error server', error);
         })
     };
 

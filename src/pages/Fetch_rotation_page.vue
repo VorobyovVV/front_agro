@@ -107,6 +107,10 @@ export default {
             //check jwt
             if (!accessToken) {
                 console.error('Нет доступного токена доступа');
+                $q.notify({
+                    type: 'negative',
+                    message: 'Залогиньтесь, пожалуйста'
+                })
                 return;
             };
 
@@ -162,6 +166,12 @@ export default {
                 router.push('/rotation')
             })
             .catch(error => {
+                if (error.response && error.response.status === 500) {
+                    $q.notify({
+                    type: 'negative',
+                    message: 'Неизвестная ошибка'
+                })
+            }
                 console.error(error);
             })
         };
