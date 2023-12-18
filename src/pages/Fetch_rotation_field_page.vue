@@ -5,12 +5,15 @@
                 <div><strong>{{ fieldName }}</strong></div>
             </q-card-section>
         </q-card>
-        <q-select v-model="computedCropId" :options="crops" option-label="label" option-value="value" label="Идентификатор культуры"></q-select>
-        <q-input v-model="cropData.startDate" label="Дата начала (DD-MM-YYYY)" hint="Format: DD-MM-YYYY" mask="##-##-####"></q-input>
-        <q-input v-model="cropData.endDate" label="Дата окончания (DD-MM-YYYY)" hint="Format: DD-MM-YYYY" mask="##-##-####"></q-input>
+        <q-select v-model="computedCropId" :options="crops" option-label="label" option-value="value"
+            label="Идентификатор культуры"></q-select>
+        <q-input v-model="cropData.startDate" label="Дата начала (DD-MM-YYYY)" hint="Format: DD-MM-YYYY"
+            mask="##-##-####"></q-input>
+        <q-input v-model="cropData.endDate" label="Дата окончания (DD-MM-YYYY)" hint="Format: DD-MM-YYYY"
+            mask="##-##-####"></q-input>
         <q-input v-model="cropData.description" label="Описание"></q-input>
 
-        <q-btn label="Передавать" @click="submitData" :disabled="isSubmitDisabled"></q-btn>
+        <q-btn label="Готово" @click="submitData" :disabled="isSubmitDisabled"></q-btn>
     </div>
 </template>
 
@@ -30,12 +33,12 @@ export default {
         const route = useRoute();
         const $q = useQuasar();
 
-        const cropData = ref({ 
-                                fieldId: '',
-                                startDate: '',
-                                endDate: '',
-                                description: '' 
-                            });
+        const cropData = ref({
+            fieldId: '',
+            startDate: '',
+            endDate: '',
+            description: ''
+        });
 
         const fieldName = ref(null);
 
@@ -54,9 +57,10 @@ export default {
             try {
                 const response = await axios.get(`http://localhost:8080/api/fields/crop-rotations?id=${cropRotationId}`, {
                     headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json'
-                }});
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
                 const cultureData = response.data;
                 console.log(cultureData);
                 fieldName.value = cultureData.field.name;
@@ -73,9 +77,10 @@ export default {
             try {
                 const response = await axios.get('http://localhost:8080/api/fields/crops?page=0&size=5000&name=', {
                     headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json'
-                }});
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
                 crops.value = response.data.map(crop => ({ label: crop.name, value: crop.id }));
             } catch (error) {
                 console.error('Error fetching crops:', error);
@@ -91,12 +96,12 @@ export default {
         });
         //check time
         const isValidDate = (dateStr) => {
-          const regex = /^\d{2}-\d{2}-\d{4}$/;
-          if (!regex.test(dateStr)) return false;
+            const regex = /^\d{2}-\d{2}-\d{4}$/;
+            if (!regex.test(dateStr)) return false;
 
-          const [day, month, year] = dateStr.split('-').map(Number);
-          const date = new Date(year, month - 1, day);
-          return date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year;
+            const [day, month, year] = dateStr.split('-').map(Number);
+            const date = new Date(year, month - 1, day);
+            return date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year;
         };
 
         const isSubmitDisabled = computed(() => {
@@ -112,27 +117,27 @@ export default {
 
             if (!isValidDate(cropData.value.startDate)) {
                 $q.notify({
-                color: 'red-5',
-                textColor: 'white',
-                icon: 'warning',
-                message: 'Неверный формат даты. Пожалуйста, используйте дд-мм-гггг.'
+                    color: 'red-5',
+                    textColor: 'white',
+                    icon: 'warning',
+                    message: 'Неверный формат даты. Пожалуйста, используйте дд-мм-гггг.'
                 });
-                return; 
+                return;
             };
 
             if (!isValidDate(cropData.value.endDate)) {
                 $q.notify({
-                color: 'red-5',
-                textColor: 'white',
-                icon: 'warning',
-                message: 'Неверный формат даты. Пожалуйста, используйте дд-мм-гггг.'
+                    color: 'red-5',
+                    textColor: 'white',
+                    icon: 'warning',
+                    message: 'Неверный формат даты. Пожалуйста, используйте дд-мм-гггг.'
                 });
-                return; 
+                return;
             };
 
             const submissionData = {
-                fieldId: cropData.value.fieldId, 
-                cropId: cropData.value.cropId.value, 
+                fieldId: cropData.value.fieldId,
+                cropId: cropData.value.cropId.value,
                 startDate: cropData.value.startDate,
                 endDate: cropData.value.endDate,
                 description: cropData.value.description
@@ -141,29 +146,29 @@ export default {
             console.log('Submitting data:', JSON.stringify(submissionData));
             axios.put(`http://localhost:8080/api/fields/crop-rotations?cropRotationId=${cropRotationId}`, submissionData, {
                 headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-            }
-            })
-            .then(response => {
-                console.log(response);
-                const selectedCrop = crops.value.find(c => c.value === cropData.value.cropId.value);
-               
-                if (selectedCrop) {
-                    computedCropId.value = selectedCrop;
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
                 }
-               
-                $q.notify({
-                    color: 'green-5',
-                    textColor: 'white',
-                    icon: 'check',
-                    message: 'Изменение успешно.'
+            })
+                .then(response => {
+                    console.log(response);
+                    const selectedCrop = crops.value.find(c => c.value === cropData.value.cropId.value);
+
+                    if (selectedCrop) {
+                        computedCropId.value = selectedCrop;
+                    }
+
+                    $q.notify({
+                        color: 'green-5',
+                        textColor: 'white',
+                        icon: 'check',
+                        message: 'Изменение успешно.'
                     });
-                router.push(`/field_information?fieldId=${submissionData.fieldId}`)
-            })
-            .catch(error => {
-                console.error(error);
-            })
+                    router.push(`/field_information?fieldId=${submissionData.fieldId}`)
+                })
+                .catch(error => {
+                    console.error(error);
+                })
         };
 
         return {

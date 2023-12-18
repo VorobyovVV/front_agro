@@ -1,6 +1,6 @@
 <template v-for="row in rows" :key="`${row.id}-${row.filed_id}`">
-    <div class="q-pa-md">
-      <q-input v-model="startDate" placeholder="Дата Начала">
+  <div class="q-pa-md">
+    <q-input v-model="startDate" placeholder="Дата начала">
       <template v-slot:append>
         <q-icon name="event" class="cursor-pointer">
           <q-popup-proxy ref="qDateProxyStart" transition-show="scale" transition-hide="scale">
@@ -10,7 +10,7 @@
       </template>
     </q-input>
 
-    <q-input v-model="endDate" placeholder="Дата Завершения">
+    <q-input v-model="endDate" placeholder="Дата окончания">
       <template v-slot:append>
         <q-icon name="event" class="cursor-pointer">
           <q-popup-proxy ref="qDateProxyEnd" transition-show="scale" transition-hide="scale">
@@ -20,17 +20,9 @@
       </template>
     </q-input>
 
-    <q-table
-      class="virtscroll-table"
-      virtual-scroll
-      flat bordered
-      v-model:pagination="pagination"
-      :rows-per-page-options="[0]"
-      :virtual-scroll-sticky-size-start="48"
-      column-key="id"
-      :rows="filteredRows"
-      :columns="rotationColumns"
-    >
+    <q-table class="virtscroll-table" virtual-scroll flat bordered v-model:pagination="pagination"
+      :rows-per-page-options="[0]" :virtual-scroll-sticky-size-start="48" column-key="id" :rows="filteredRows"
+      :columns="rotationColumns">
       <template v-slot:body-cell-row_number="props">
         <q-td :props="props">
           {{ props.rowIndex + 1 }}
@@ -52,13 +44,13 @@
 
 <script>
 import { ref, computed, watchEffect, onMounted, reactive } from 'vue'
-import axios from 'axios' ;
+import axios from 'axios';
 import { userStore } from 'src/usage';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
 
 export default {
-  setup () {
+  setup() {
     const startDate = ref('')
     const endDate = ref('')
     const $q = useQuasar();
@@ -68,17 +60,17 @@ export default {
     const rotationColumns = reactive([
       { name: 'row_number', label: 'ID', align: 'center', field: (_row, index) => index + 1, sortable: true },
       { name: 'culture', label: 'Культура', align: 'center', field: 'culture', sortable: true },
-      { name: 'field_area', label: 'Площадь Поля', align: 'center', field: 'field_area', sortable: true  },
-      { name: 'start_time', label: 'Дата Начала', align: 'center', field: 'start_time', sortable: true  },
-      { name: 'end_time', label: 'Дата Завершения', align: 'center', field: 'end_time', sortable: true  },
+      { name: 'field_area', label: 'Площадь поля', align: 'center', field: 'field_area', sortable: true },
+      { name: 'start_time', label: 'Дата пачала', align: 'center', field: 'start_time', sortable: true },
+      { name: 'end_time', label: 'Дата окончания', align: 'center', field: 'end_time', sortable: true },
       { name: 'description', label: 'Описание', align: 'center', field: 'description' },
-      { name: 'edit', label: 'Edit', align: 'center', field: row => row.id, format: val => `${val}` },
-      { name: 'actions', label: 'Delete', align: 'center', field: row => row.id, format: val => `${val}` }
+      { name: 'edit', label: 'Редактировать', align: 'center', field: row => row.id, format: val => `${val}` },
+      { name: 'actions', label: 'Удалить', align: 'center', field: row => row.id, format: val => `${val}` }
     ]);
-   
+
     function formatDateString(dateString) {
       const parts = dateString.split('-');
-      if (parts.length ===3) {
+      if (parts.length === 3) {
         return `${parts[2]}-${parts[1]}-${parts[0]}`;
       }
       return dateString;
@@ -97,10 +89,10 @@ export default {
 
         if (response.status === 204) {
           $q.notify({
-          color: 'green-5',
-          textColor: 'white',
-          icon: 'check',
-          message: 'Successful delete'
+            color: 'green-5',
+            textColor: 'white',
+            icon: 'check',
+            message: 'Удалено'
           });
           rotationData.splice(rotationData.findIndex(row => row.id === rowId), 1);
         } else {
@@ -112,7 +104,7 @@ export default {
     }
 
     async function navigateToPage(rowId) {
-      router.push({ path: '/fetch_rotation', query: { id: rowId }});
+      router.push({ path: '/fetch_rotation', query: { id: rowId } });
     };
 
     onMounted(async () => {
@@ -120,33 +112,33 @@ export default {
       const accessToken = userStore.state.access_token;
 
       if (!accessToken) {
-          console.log("No access token available");
-          return;
+        console.log("No access token available");
+        return;
       };
 
       try {
-                const response = await axios.get('http://localhost:8080/api/fields/crop-rotations/organization', {
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                const data = response.data;
-                console.log(response.data);
+        const response = await axios.get('http://localhost:8080/api/fields/crop-rotations/organization', {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const data = response.data;
+        console.log(response.data);
 
-        if(data) {
+        if (data) {
           data.forEach(item => {
             rotationData.push({
               id: item.id,
               culture: item.crop.name,
-              field_area: item.field.name, 
+              field_area: item.field.name,
               start_time: formatDateString(item.startDate),
               end_time: formatDateString(item.endDate),
               description: item.description
             });
           })
         }
-      } catch(error) {
+      } catch (error) {
         console.error('Wrong Api', error);
       };
     });
@@ -196,6 +188,7 @@ export default {
   .q-table th {
     font-size: 20px !important;
   }
+
   .q-table td {
     font-size: 15px !important;
   }
@@ -206,9 +199,11 @@ export default {
   .q-table th {
     font-size: 20px !important;
   }
+
   .q-table td {
     font-size: 15px !important;
   }
+
   .virtscroll-table {
     margin-top: 20px;
     margin-bottom: 20px;

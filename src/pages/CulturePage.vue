@@ -1,12 +1,16 @@
 <template>
     <div v-show="cropData">
-        <q-select v-model="computedFieldId" :options="fields" option-label="label" option-value="value" label="Поле"></q-select>
-        <q-select v-model="computedCropId" :options="crops" option-label="label" option-value="value" label="Культура"></q-select>
-        <q-input v-model="cropData.startDate" label="StartDate (DD-MM-YYYY)" hint="Format: DD-MM-YYYY" mask="##-##-####"></q-input>
-        <q-input v-model="cropData.endDate" label="EndDate (DD-MM-YYYY)" hint="Format: DD-MM-YYYY" mask="##-##-####"></q-input>
-        <q-input v-model="cropData.description" label="Description"></q-input>
+        <q-select v-model="computedFieldId" :options="fields" option-label="label" option-value="value"
+            label="Поле"></q-select>
+        <q-select v-model="computedCropId" :options="crops" option-label="label" option-value="value"
+            label="Культура"></q-select>
+        <q-input v-model="cropData.startDate" label="Дата начала (DD-MM-YYYY)" hint="Format: DD-MM-YYYY"
+            mask="##-##-####"></q-input>
+        <q-input v-model="cropData.endDate" label="Дата окончания (DD-MM-YYYY)" hint="Format: DD-MM-YYYY"
+            mask="##-##-####"></q-input>
+        <q-input v-model="cropData.description" label="Описание"></q-input>
 
-        <q-btn label="ПЕРЕДАВАТЬ" @click="submitData" :disabled="isSubmitDisabled"></q-btn>
+        <q-btn label="Готово" @click="submitData" :disabled="isSubmitDisabled"></q-btn>
     </div>
 </template>
 
@@ -23,12 +27,12 @@ export default {
 
         const $q = useQuasar();
 
-        const cropData = ref({ 
-                                fieldId: '',
-                                startDate: '',
-                                endDate: '',
-                                description: '' 
-                            });
+        const cropData = ref({
+            fieldId: '',
+            startDate: '',
+            endDate: '',
+            description: ''
+        });
 
         const fields = ref([]);
 
@@ -45,9 +49,10 @@ export default {
             try {
                 const response = await axios.get('http://localhost:8080/api/fields/organization/preview', {
                     headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json'
-                }});
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
                 fields.value = response.data.map(field => ({ label: field.name, value: field.id }));
                 console.log(fields);
             } catch (error) {
@@ -59,9 +64,10 @@ export default {
             try {
                 const response = await axios.get('http://localhost:8080/api/fields/crops?page=0&size=5000&name=', {
                     headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json'
-                }});
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
                 crops.value = response.data.map(crop => ({ label: crop.name, value: crop.id }));
             } catch (error) {
                 console.error('Error fetching crops:', error);
@@ -83,12 +89,12 @@ export default {
         });
         //check time
         const isValidDate = (dateStr) => {
-          const regex = /^\d{2}-\d{2}-\d{4}$/;
-          if (!regex.test(dateStr)) return false;
+            const regex = /^\d{2}-\d{2}-\d{4}$/;
+            if (!regex.test(dateStr)) return false;
 
-          const [day, month, year] = dateStr.split('-').map(Number);
-          const date = new Date(year, month - 1, day);
-          return date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year;
+            const [day, month, year] = dateStr.split('-').map(Number);
+            const date = new Date(year, month - 1, day);
+            return date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year;
         };
 
         const isSubmitDisabled = computed(() => {
@@ -104,27 +110,27 @@ export default {
 
             if (!isValidDate(cropData.value.startDate)) {
                 $q.notify({
-                color: 'red-5',
-                textColor: 'white',
-                icon: 'warning',
-                message: 'Неверный формат даты. Пожалуйста, используйте дд-мм-гггг.'
+                    color: 'red-5',
+                    textColor: 'white',
+                    icon: 'warning',
+                    message: 'Неверный формат даты. Пожалуйста, используйте дд-мм-гггг.'
                 });
-                return; 
+                return;
             };
 
             if (!isValidDate(cropData.value.endDate)) {
                 $q.notify({
-                color: 'red-5',
-                textColor: 'white',
-                icon: 'warning',
-                message: 'Неверный формат даты. Пожалуйста, используйте дд-мм-гггг.'
+                    color: 'red-5',
+                    textColor: 'white',
+                    icon: 'warning',
+                    message: 'Неверный формат даты. Пожалуйста, используйте дд-мм-гггг.'
                 });
-                return; 
+                return;
             };
 
             const submissionData = {
-                fieldId: cropData.value.fieldId.value, 
-                cropId: cropData.value.cropId.value, 
+                fieldId: cropData.value.fieldId.value,
+                cropId: cropData.value.cropId.value,
                 startDate: cropData.value.startDate,
                 endDate: cropData.value.endDate,
                 description: cropData.value.description
@@ -134,32 +140,32 @@ export default {
             console.log('Submitting data:', JSON.stringify(submissionData));
             axios.post('http://localhost:8080/api/fields/crop-rotations', submissionData, {
                 headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-            }
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
             })
-            .then(response => {
-                console.log(response);
-                const selectedField = fields.value.find(f => f.value === cropData.value.fieldId.value);
-                const selectedCrop = crops.value.find(c => c.value === cropData.value.cropId.value);
+                .then(response => {
+                    console.log(response);
+                    const selectedField = fields.value.find(f => f.value === cropData.value.fieldId.value);
+                    const selectedCrop = crops.value.find(c => c.value === cropData.value.cropId.value);
 
-                if (selectedField) {
-                    computedFieldId.value = selectedField;
-                }
-                if (selectedCrop) {
-                    computedCropId.value = selectedCrop;
-                }
-              
-                $q.notify({
-                    color: 'green-5',
-                    textColor: 'white',
-                    icon: 'check',
-                    message: 'Изменение успешно.'
+                    if (selectedField) {
+                        computedFieldId.value = selectedField;
+                    }
+                    if (selectedCrop) {
+                        computedCropId.value = selectedCrop;
+                    }
+
+                    $q.notify({
+                        color: 'green-5',
+                        textColor: 'white',
+                        icon: 'check',
+                        message: 'Изменение успешно.'
                     });
-            })
-            .catch(error => {
-                console.error(error);
-            })
+                })
+                .catch(error => {
+                    console.error(error);
+                })
         };
 
         return {
