@@ -40,7 +40,7 @@ export function postreg({ email, text_password, role }) {
             "role": role
         }
         axios
-            .post('http://localhost:8080/api/auth/register', myrequest)
+            .post(`${process.env.QUASAR_APP_API_URL}/api/auth/register`, myrequest)
             .then((response) => {
                 console.log(response);
                 const code = response.status;
@@ -68,7 +68,7 @@ export function postlog({ username, password }) {
         }
 
         axios
-            .post('http://localhost:8080/api/auth/token', myrequest, {
+            .post(`${process.env.QUASAR_APP_API_URL}/api/auth/token`, myrequest, {
                 headers: {
                     'content-type': 'application/x-www-form-urlencoded'
                 }
